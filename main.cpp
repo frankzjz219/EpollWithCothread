@@ -61,7 +61,9 @@ void schedule_test()
     
 
     int id1 = uthread_create(s,func2,&s);
-    int id2 = uthread_create(s,func3,&s);
+    int id2 = uthread_create(s,func2,&s);
+    int id3 = uthread_create(s,func2,&s);
+    int id4 = uthread_create(s,func2,&s);
     int cnt = 0;
     while(!schedule_finished(s)){
         // uthread_resume(s,id1);
