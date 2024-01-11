@@ -31,6 +31,7 @@ typedef struct uthread_t
     char stack[DEFAULT_STACK_SZIE];
     unsigned long long usedTime;
     unsigned long long prevTime;
+    unsigned long long priority;
 }uthread_t;
 
 typedef struct schedule_t
@@ -45,7 +46,7 @@ typedef struct schedule_t
         auto cmp = [this](int a, int b)
         {
             // printf("%d and %d comping\n", a, b);
-            return (threads[a]->usedTime)>(threads[b]->usedTime);// 小根堆
+            return (threads[a]->usedTime)/(threads[a]->priority)>(threads[b]->usedTime)/(threads[b]->priority);// 小根堆
         };
         threadPool = std::priority_queue<int, std::vector<int>, std::function<bool(int, int)>>(cmp);
     }
@@ -74,7 +75,7 @@ static void uthread_body(schedule_t *ps);
 *    @return:
 *        return the index of the created thread in schedule
 */
-int  uthread_create(schedule_t &schedule,Fun func,void *arg);
+int  uthread_create(schedule_t &schedule,Fun func, unsigned long long priority, void *arg);
 
 /* Hang the currently running thread, switch to main thread */
 void uthread_yield(schedule_t &schedule);

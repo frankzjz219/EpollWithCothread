@@ -25,3 +25,17 @@ thread 2 has been running for 11938902
 thread 1 has been running for 11784062
 thread 0 has been running for 11879633
 ```
+- 给thread添加了优先级设置功能，每个线程计算运行时间的时候用真实的时间/优先级
+- 测试结果
+```shell
+thread 3 has been running for 8242206
+thread 2 has been running for 6113781
+thread 1 has been running for 4113923
+thread 0 has been running for 2097486
+
+thread 3 has been running for 8490418
+thread 2 has been running for 6297884
+thread 1 has been running for 4303349
+thread 0 has been running for 2243932
+```
+- 四个线程优先级分别是4，3，2，1，可见效果还是明显的

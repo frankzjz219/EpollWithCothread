@@ -61,7 +61,7 @@ void uthread_body(schedule_t *ps)
     }
 }
 
-int uthread_create(schedule_t &schedule,Fun func,void *arg)
+int uthread_create(schedule_t &schedule,Fun func, unsigned long long priority, void *arg)
 {
     int id = 0;
     
@@ -81,6 +81,7 @@ int uthread_create(schedule_t &schedule,Fun func,void *arg)
     t->state = RUNNABLE;
     t->func = func;
     t->arg = arg;
+    t->priority = priority;
 
     getcontext(&(t->ctx));
     
