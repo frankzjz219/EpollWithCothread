@@ -35,15 +35,6 @@ void func3(void * arg)
     
 }
 
-// void func3(void *arg)
-// {
-//     puts("3333");
-//     puts("3333");
-//     uthread_yield(*(schedule_t *)arg);
-//     puts("3333");
-//     puts("3333");
-
-// }
 
 schedule_t s;
 
@@ -59,7 +50,6 @@ void sigINTHandler(int i)
 void schedule_test()
 {
     
-
     int id1 = uthread_create(s,func2, 1,&s);
     int id2 = uthread_create(s,func2, 2,&s);
     int id3 = uthread_create(s,func2, 3,&s);

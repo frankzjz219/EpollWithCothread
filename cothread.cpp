@@ -1,5 +1,13 @@
 #include "cothread.h"
 
+schedule_t:: schedule_t():running_thread(-1), max_index(0) {
+    auto cmp = [this](int a, int b)
+    {
+        return (threads[a]->usedTime)/(threads[a]->priority)>(threads[b]->usedTime)/(threads[b]->priority);// 小根堆
+    };
+    threadPool = std::priority_queue<int, std::vector<int>, std::function<bool(int, int)>>(cmp);
+}
+
 unsigned long long getMicroseconds() {
     struct timeval currentTime;
     gettimeofday(&currentTime, NULL);
@@ -13,7 +21,7 @@ void uthread_resume(schedule_t &schedule , int id)
         return;
     }
 
-    uthread_t *t = schedule.threads[id];
+    std::shared_ptr<uthread_t> t = schedule.threads[id];
 
     if (t->state == RUNNABLE) {
         schedule.running_thread = id;
@@ -36,7 +44,7 @@ void uthread_yield(schedule_t &schedule)
 {
     // printf("yielding\n");
     if(schedule.running_thread != -1 ){
-        uthread_t *t = schedule.threads[schedule.running_thread];
+        std::shared_ptr<uthread_t> t = schedule.threads[schedule.running_thread];
         t->state = RUNNABLE;
         schedule.running_thread = -1;
         t->usedTime += getMicroseconds() - t->prevTime;
@@ -51,7 +59,7 @@ void uthread_body(schedule_t *ps)
     int id = ps->running_thread;
 
     if(id != -1){
-        uthread_t *t = ps->threads[id]; // 找到当前在执行的函数的信息
+        std::shared_ptr<uthread_t> t = ps->threads[id]; // 找到当前在执行的函数的信息
 
         t->func(t->arg); // 这里执行了任务函数
 
@@ -74,8 +82,8 @@ int uthread_create(schedule_t &schedule,Fun func, unsigned long long priority, v
     if (id == schedule.max_index) {
         schedule.max_index++;
     }
-    schedule.threads[id] = new uthread_t;
-    uthread_t *t = schedule.threads[id];
+    schedule.threads[id] = std::make_shared<uthread_t>();
+    std::shared_ptr<uthread_t> t = schedule.threads[id];
     t->id = id; // 建立thread指针向携程id的索引
 
     t->state = RUNNABLE;

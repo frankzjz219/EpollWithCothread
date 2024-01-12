@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <stdio.h>
+#include <memory>
 
 #define DEFAULT_STACK_SZIE (1024*128)
 #define MAX_UTHREAD_SIZE   1024
@@ -38,25 +39,14 @@ typedef struct schedule_t
 {
     ucontext_t main;
     int running_thread;
-    std:: unordered_map<int, uthread_t*> threads;
+    std:: unordered_map<int, std::shared_ptr<uthread_t>> threads;
     std:: priority_queue<int, std::vector<int>, std::function<bool(int, int)>>threadPool;
     int max_index; // 曾经使用到的最大的index + 1
 
-    schedule_t():running_thread(-1), max_index(0) {
-        auto cmp = [this](int a, int b)
-        {
-            // printf("%d and %d comping\n", a, b);
-            return (threads[a]->usedTime)/(threads[a]->priority)>(threads[b]->usedTime)/(threads[b]->priority);// 小根堆
-        };
-        threadPool = std::priority_queue<int, std::vector<int>, std::function<bool(int, int)>>(cmp);
-    }
+    schedule_t();
     
     ~schedule_t() {
-        printf("正在析构...\n");
-        // for(auto i = threads.begin(); i!=threads.end(); ++i)
-        // {
-        //     delete i->second; // 逐个释放进程结构体
-        // }
+        // printf("正在析构...\n");
     }
 }schedule_t;
 
