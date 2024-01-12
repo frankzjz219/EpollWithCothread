@@ -10,6 +10,8 @@
 #include <sys/time.h>
 #include <stdio.h>
 #include <memory>
+#include <pthread.h>
+#include <stdlib.h>
 
 #define DEFAULT_STACK_SZIE (1024*128)
 #define MAX_UTHREAD_SIZE   1024
@@ -35,6 +37,22 @@ typedef struct uthread_t
     unsigned long long priority;
 }uthread_t;
 
+class mutexWrapper
+{
+    pthread_mutex_t mutex;
+public:
+    mutexWrapper():mutex(PTHREAD_MUTEX_INITIALIZER){}
+    ~mutexWrapper(){pthread_mutex_destroy(&mutex);}
+    void lock()
+    {
+        pthread_mutex_lock(&mutex);
+    }
+    void unlock()
+    {
+        pthread_mutex_unlock(&mutex);
+    }
+};
+
 typedef struct schedule_t
 {
     ucontext_t main;
@@ -42,6 +60,9 @@ typedef struct schedule_t
     std:: unordered_map<int, std::shared_ptr<uthread_t>> threads;
     std:: priority_queue<int, std::vector<int>, std::function<bool(int, int)>>threadPool;
     int max_index; // 曾经使用到的最大的index + 1
+    std::shared_ptr<mutexWrapper> mutex;
+    pthread_t threadHandle;
+    int stopFlag;
 
     schedule_t();
     
@@ -49,6 +70,9 @@ typedef struct schedule_t
         // printf("正在析构...\n");
     }
 }schedule_t;
+
+// 创建一个携程调度器（一个独立的线程）
+void createCoThread(schedule_t& schedule);
 
 // 寻找此时运行时间最短的线程上处理机
 void fairResume(schedule_t &schedule);

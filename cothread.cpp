@@ -1,6 +1,6 @@
 #include "cothread.h"
 
-schedule_t:: schedule_t():running_thread(-1), max_index(0) {
+schedule_t:: schedule_t():running_thread(-1), max_index(0), mutex(std::make_shared<mutexWrapper>()), stopFlag(0) {
     auto cmp = [this](int a, int b)
     {
         return (threads[a]->usedTime)/(threads[a]->priority)>(threads[b]->usedTime)/(threads[b]->priority);// 小根堆
@@ -16,8 +16,10 @@ unsigned long long getMicroseconds() {
 
 void uthread_resume(schedule_t &schedule , int id)
 {
+    schedule.mutex->lock();
     // printf("Resuming\n");
     if(id < 0 || id >= schedule.max_index){
+        schedule.mutex->unlock();
         return;
     }
 
@@ -26,16 +28,23 @@ void uthread_resume(schedule_t &schedule , int id)
     if (t->state == RUNNABLE) {
         schedule.running_thread = id;
         t->prevTime = getMicroseconds();
+        schedule.mutex->unlock();
         swapcontext(&(schedule.main),&(t->ctx));
         // setcontext(&(t->ctx));
+    }
+    else 
+    {
+        schedule.mutex->unlock();
     }
 }
 
 // 找到当前运行时间最短的携程上处理机
 void fairResume(schedule_t &schedule)
 {
+    schedule.mutex->lock();
     int id = schedule.threadPool.top();
     schedule.threadPool.pop();
+    schedule.mutex->unlock();
     // printf("poping %d\n", id);
     uthread_resume(schedule, id);
 }
@@ -43,6 +52,7 @@ void fairResume(schedule_t &schedule)
 void uthread_yield(schedule_t &schedule)
 {
     // printf("yielding\n");
+    schedule.mutex->lock();
     if(schedule.running_thread != -1 ){
         std::shared_ptr<uthread_t> t = schedule.threads[schedule.running_thread];
         t->state = RUNNABLE;
@@ -50,7 +60,12 @@ void uthread_yield(schedule_t &schedule)
         t->usedTime += getMicroseconds() - t->prevTime;
         schedule.threadPool.push(t->id); // 重新加入回队列
         // printf("pushing %d\n", t->id);
+        schedule.mutex->unlock();
         swapcontext(&(t->ctx),&(schedule.main));
+    }
+    else
+    {
+        schedule.mutex->unlock();
     }
 }
 
@@ -71,8 +86,9 @@ void uthread_body(schedule_t *ps)
 
 int uthread_create(schedule_t &schedule,Fun func, unsigned long long priority, void *arg)
 {
+    printf("trying to create coThread...\n");
     int id = 0;
-    
+    schedule.mutex->lock();
     for(id = 0; id < schedule.max_index; ++id ){
         if(schedule.threads[id]->state == FREE){
             break;
@@ -97,12 +113,16 @@ int uthread_create(schedule_t &schedule,Fun func, unsigned long long priority, v
     t->ctx.uc_stack.ss_size = DEFAULT_STACK_SZIE;
     t->ctx.uc_stack.ss_flags = 0;
     t->ctx.uc_link = &(schedule.main);
-    schedule.running_thread = id;
+    // schedule.running_thread = id;
     t->usedTime = 0;
     t->prevTime = getMicroseconds();
     
     makecontext(&(t->ctx),(void (*)(void))(uthread_body),1,&schedule);
-    swapcontext(&(schedule.main), &(t->ctx));
+    schedule.threadPool.push(id);
+    schedule.mutex->unlock();
+    printf("创建coThread完毕！\n");
+    // 执行携程任务函数
+    // swapcontext(&(schedule.main), &(t->ctx));
     // setcontext(&(t->ctx));
     
     return id;
@@ -110,15 +130,59 @@ int uthread_create(schedule_t &schedule,Fun func, unsigned long long priority, v
 
 int schedule_finished(schedule_t &schedule)
 {
+    schedule.mutex->lock();
     if (schedule.running_thread != -1){
+        schedule.mutex->unlock();
         return 0;
     }else{
         for(int i = 0; i < schedule.max_index; ++i){
             if(schedule.threads[i]->state != FREE){
+                schedule.mutex->unlock();
                 return 0;
             }
         }
     }
-
+    schedule.mutex->unlock();
     return 1;
+}
+
+void* coThreadScheduler(void* schedule)
+{
+    int cnt = 0;
+    schedule_t& s = *(schedule_t*)schedule;
+    while(!s.stopFlag){
+        if(!schedule_finished(s))
+        {
+            fairResume(s);
+            if(cnt%10 == 0)
+            {
+                for(auto i = s.threads.begin(); i!=s.threads.end(); ++i)
+                {
+                    printf("thread %d has been running for %llu\n", i->second->id, i->second->usedTime);
+                }
+                printf("\n");
+                
+            }
+            ++cnt;
+        }
+        else
+        {
+            printf("no active job!\n");
+            usleep((unsigned long)1e6);
+        }
+        
+    }
+    puts("scheduler over");
+    return NULL;
+}
+
+void createCoThread(schedule_t& schedule)
+{
+    printf("Creating coThread scheduler...\n");
+    if(pthread_create(&(schedule.threadHandle), NULL, coThreadScheduler, &schedule))
+    {
+        perror("Cothread creation failed");
+        exit(EXIT_FAILURE);
+    }
+    // pthread_join(schedule.threadHandle, NULL);
 }
