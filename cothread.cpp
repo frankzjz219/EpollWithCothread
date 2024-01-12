@@ -154,7 +154,7 @@ void* coThreadScheduler(void* schedule)
         if(!schedule_finished(s))
         {
             fairResume(s);
-            if(cnt%10 == 0)
+            if(cnt%30 == 0)
             {
                 for(auto i = s.threads.begin(); i!=s.threads.end(); ++i)
                 {

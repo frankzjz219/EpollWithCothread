@@ -52,6 +52,10 @@ int main()
     uthread_create(s[1], func2, 1, &(s[1]));
     uthread_create(s[0], func2, 2, &(s[0]));
     uthread_create(s[1], func2, 2, &(s[1]));
+    uthread_create(s[0], func2, 3, &(s[0]));
+    uthread_create(s[1], func2, 3, &(s[1]));
+    uthread_create(s[0], func2, 4, &(s[0]));
+    uthread_create(s[1], func2, 4, &(s[1]));
 
     while(1){usleep((unsigned long)1e6);}
     return 0;

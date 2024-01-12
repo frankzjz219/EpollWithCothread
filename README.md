@@ -41,3 +41,30 @@ thread 0 has been running for 2243932
 - 四个线程优先级分别是4，3，2，1，可见效果还是明显的
 ## 1月12日更新
 - 修改为了多线程版本，添加了应对用户`Ctrl C`停止并收集线程的版本，多个线程分别调度，分别设置携程的优先级
+- 结果
+```shell
+thread 3 has been running for 3700986
+thread 2 has been running for 2826419
+thread 1 has been running for 1870166
+thread 0 has been running for 979257
+
+thread 3 has been running for 4630933
+thread 2 has been running for 3403631
+thread 1 has been running for 2266645
+thread 0 has been running for 1178867
+
+thread 3 has been running for 4836192
+thread 2 has been running for 3548546
+thread 1 has been running for 2428993
+thread 0 has been running for 1266614
+
+thread 3 has been running for 5811463
+thread 2 has been running for 4510098
+thread 1 has been running for 2956609
+thread 0 has been running for 1635317
+
+thread 3 has been running for 6065180
+thread 2 has been running for 4631231
+thread 1 has been running for 3007414
+thread 0 has been running for 1547652
+```
