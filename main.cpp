@@ -1,9 +1,13 @@
-#include "cothread.h"
+
 #include <stdio.h>
 #include <random>
-#include <csignal>
 
-#define COTHREADNUM 2
+
+#include "cothread.h"
+extern int schedule_t::cntScheduler;
+#define COTHREADNUM 10
+
+std::vector<schedule_t> scheduler_attrs(COTHREADNUM);
 
 int getRandomNumber(int min, int max) {
     std::random_device rd;
@@ -25,37 +29,27 @@ void func2(void * arg)
 
 
 
-schedule_t s[COTHREADNUM];
-
-
-void sigINTHandler(int i)
-{
-    for(auto&i : s)
-    {
-        printf("关闭携程中...\n");
-        i.stopFlag = 1;//使得携程停止
-        pthread_join(i.threadHandle, NULL);
-    }
-    exit(0);
-}
 
 
 int main()
 {
+    // 需要具有应对SIGINT功能的话必须设置SIGINT的处理函数是头文件规定的函数
     signal(SIGINT, sigINTHandler);
     for(int i = 0; i<COTHREADNUM; ++i)
     {
-        createCoThread(s[i]);
+        createCoThread(scheduler_attrs[i]);
     }
 
-    uthread_create(s[0], func2, 1, &(s[0]));
-    uthread_create(s[1], func2, 1, &(s[1]));
-    uthread_create(s[0], func2, 2, &(s[0]));
-    uthread_create(s[1], func2, 2, &(s[1]));
-    uthread_create(s[0], func2, 3, &(s[0]));
-    uthread_create(s[1], func2, 3, &(s[1]));
-    uthread_create(s[0], func2, 4, &(s[0]));
-    uthread_create(s[1], func2, 4, &(s[1]));
+    uthread_create(scheduler_attrs[0], func2, 1, &(scheduler_attrs[0]));
+    uthread_create(scheduler_attrs[1], func2, 1, &(scheduler_attrs[1]));
+    uthread_create(scheduler_attrs[0], func2, 2, &(scheduler_attrs[0]));
+    uthread_create(scheduler_attrs[1], func2, 2, &(scheduler_attrs[1]));
+    uthread_create(scheduler_attrs[0], func2, 3, &(scheduler_attrs[0]));
+    uthread_create(scheduler_attrs[1], func2, 3, &(scheduler_attrs[1]));
+    uthread_create(scheduler_attrs[0], func2, 4, &(scheduler_attrs[0]));
+    uthread_create(scheduler_attrs[1], func2, 4, &(scheduler_attrs[1]));
+    uthread_create(scheduler_attrs[2], func2, 1, &(scheduler_attrs[2]));
+    uthread_create(scheduler_attrs[3], func2, 1, &(scheduler_attrs[2]));
 
     while(1){usleep((unsigned long)1e6);}
     return 0;

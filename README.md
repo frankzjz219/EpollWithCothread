@@ -68,3 +68,6 @@ thread 2 has been running for 4631231
 thread 1 has been running for 3007414
 thread 0 has been running for 1547652
 ```
+## 1月13日更新
+- 将尽可能多的功能封装在了头文件中，保持对用户的不可见
+- 给`shceduler`增加了id属性编号

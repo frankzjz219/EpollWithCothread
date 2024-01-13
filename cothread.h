@@ -12,6 +12,8 @@
 #include <memory>
 #include <pthread.h>
 #include <stdlib.h>
+#include <csignal>
+#include <string>
 
 #define DEFAULT_STACK_SZIE (1024*128)
 #define MAX_UTHREAD_SIZE   1024
@@ -63,12 +65,14 @@ typedef struct schedule_t
     std::shared_ptr<mutexWrapper> mutex;
     pthread_t threadHandle;
     int stopFlag;
+    static int cntScheduler;
+    int id;
 
     schedule_t();
     
     ~schedule_t() {
         // printf("正在析构...\n");
-    }
+    };
 }schedule_t;
 
 // 创建一个携程调度器（一个独立的线程）
@@ -104,6 +108,19 @@ void uthread_resume(schedule_t &schedule,int id);
 * @return:
 *    return 1 if all threads run over,otherwise return 0
 */
-int  schedule_finished(schedule_t &schedule);
+int schedule_finished(schedule_t &schedule);
+
+// 这里打开的线程数组全局变量
+extern std::vector<schedule_t> scheduler_attrs;
+
+// 处理关闭多线程的函数
+void sigINTHandler(int i);
+
+// static std::string fileName(__FILE__);
+
+// if(fileName.find("main.cpp")!=std::string::npos)
+// {
+//     int schedule_t::cntScheduler = 0;
+// }
 
 #endif

@@ -86,7 +86,7 @@ void uthread_body(schedule_t *ps)
 
 int uthread_create(schedule_t &schedule,Fun func, unsigned long long priority, void *arg)
 {
-    printf("trying to create coThread...\n");
+    // printf("trying to create coThread...\n");
     int id = 0;
     schedule.mutex->lock();
     for(id = 0; id < schedule.max_index; ++id ){
@@ -151,17 +151,18 @@ void* coThreadScheduler(void* schedule)
     int cnt = 0;
     schedule_t& s = *(schedule_t*)schedule;
     while(!s.stopFlag){
+        printf("Scheduler %d:\n", s.id);
         if(!schedule_finished(s))
         {
             fairResume(s);
             if(cnt%30 == 0)
             {
+                
                 for(auto i = s.threads.begin(); i!=s.threads.end(); ++i)
                 {
                     printf("thread %d has been running for %llu\n", i->second->id, i->second->usedTime);
                 }
                 printf("\n");
-                
             }
             ++cnt;
         }
@@ -178,11 +179,30 @@ void* coThreadScheduler(void* schedule)
 
 void createCoThread(schedule_t& schedule)
 {
-    printf("Creating coThread scheduler...\n");
+    schedule.id = ++schedule_t::cntScheduler;
+    printf("Creating coThread scheduler %d ...\n", schedule.id);
     if(pthread_create(&(schedule.threadHandle), NULL, coThreadScheduler, &schedule))
     {
         perror("Cothread creation failed");
         exit(EXIT_FAILURE);
     }
-    // pthread_join(schedule.threadHandle, NULL);
+}
+
+
+void sigINTHandler(int i)
+{
+    for(int i = 0; i<scheduler_attrs.size(); ++i)
+    {
+        printf("关闭携程 %d 中...\n", i);
+        scheduler_attrs[i].stopFlag = 1;//使得携程停止
+        if(pthread_join(scheduler_attrs[i].threadHandle, NULL))
+        {
+            printf("***回收携程线程 %d 失败!***\n", i);
+        }
+        else
+        {
+            printf("回收携程线程 %d 完成！\n", i);
+        }
+    }
+    exit(0);
 }
