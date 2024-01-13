@@ -116,11 +116,4 @@ extern std::vector<schedule_t> scheduler_attrs;
 // 处理关闭多线程的函数
 void sigINTHandler(int i);
 
-// static std::string fileName(__FILE__);
-
-// if(fileName.find("main.cpp")!=std::string::npos)
-// {
-//     int schedule_t::cntScheduler = 0;
-// }
-
 #endif

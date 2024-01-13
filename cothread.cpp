@@ -193,15 +193,15 @@ void sigINTHandler(int i)
 {
     for(int i = 0; i<scheduler_attrs.size(); ++i)
     {
-        printf("关闭携程 %d 中...\n", i);
+        printf("关闭携程 %d 中...\n", scheduler_attrs[i].id);
         scheduler_attrs[i].stopFlag = 1;//使得携程停止
         if(pthread_join(scheduler_attrs[i].threadHandle, NULL))
         {
-            printf("***回收携程线程 %d 失败!***\n", i);
+            printf("***回收携程线程 %d 失败!***\n", scheduler_attrs[i].id);
         }
         else
         {
-            printf("回收携程线程 %d 完成！\n", i);
+            printf("回收携程线程 %d 完成！\n", scheduler_attrs[i].id);
         }
     }
     exit(0);
