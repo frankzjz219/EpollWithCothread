@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <random>
 
-
+// g++ cothread.cpp main.cpp -o test -lpthread -g
 #include "cothread.h"
 extern int schedule_t::cntScheduler;
-#define COTHREADNUM 10
+#define COTHREADNUM 3
 
 std::vector<schedule_t> scheduler_attrs(COTHREADNUM);
 
