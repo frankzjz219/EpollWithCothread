@@ -5,7 +5,7 @@
 // g++ cothread.cpp main.cpp -o test -lpthread -g
 #include "cothread.h"
 extern int schedule_t::cntScheduler;
-#define COTHREADNUM 3
+#define COTHREADNUM 4
 
 std::vector<schedule_t> scheduler_attrs(COTHREADNUM);
 
@@ -27,6 +27,10 @@ void func2(void * arg)
     }
 }
 
+void func(void* arg)
+{
+    usleep(getRandomNumber(10, 200)*1000);
+}
 
 
 
@@ -49,7 +53,7 @@ int main()
     uthread_create(scheduler_attrs[0], func2, 4, &(scheduler_attrs[0]));
     uthread_create(scheduler_attrs[1], func2, 4, &(scheduler_attrs[1]));
     uthread_create(scheduler_attrs[2], func2, 1, &(scheduler_attrs[2]));
-    // uthread_create(scheduler_attrs[3], func2, 1, &(scheduler_attrs[2]));
+    uthread_create(scheduler_attrs[3], func, 1, &(scheduler_attrs[2]));
 
     while(1){usleep((unsigned long)1e6);}
     return 0;

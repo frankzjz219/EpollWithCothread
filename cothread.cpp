@@ -49,6 +49,7 @@ void fairResume(schedule_t &schedule)
     uthread_resume(schedule, id);
 }
 
+// 协程让出控制流的函数
 void uthread_yield(schedule_t &schedule)
 {
     // printf("yielding\n");
@@ -74,7 +75,7 @@ void uthread_body(schedule_t *ps, int id)
 {
     std::shared_ptr<uthread_t> t = ps->threads[id]; // 找到当前在执行的函数的信息
 
-    t->func(t->arg); // 这里执行了任务函数
+    t->func(t->arg); // 这里执行了任务函数（arg是函数的参数）
 
     t->state = FREE; // 执行结束之后设置为FREE提示结束
     
