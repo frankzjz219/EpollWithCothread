@@ -55,8 +55,9 @@ public:
     }
 };
 
-typedef struct schedule_t
+class schedule_t
 {
+public:
     ucontext_t main;
     int running_thread;
     std:: unordered_map<int, std::shared_ptr<uthread_t>> threads;
@@ -73,7 +74,7 @@ typedef struct schedule_t
     ~schedule_t() {
         // printf("正在析构...\n");
     };
-}schedule_t;
+};
 
 // 创建一个携程调度器（一个独立的线程）
 void createCoThread(schedule_t& schedule);
