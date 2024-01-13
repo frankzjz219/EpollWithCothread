@@ -82,7 +82,7 @@ void createCoThread(schedule_t& schedule);
 void fairResume(schedule_t &schedule);
 
 /*help the thread running in the schedule*/
-static void uthread_body(schedule_t *ps);
+static void uthread_body(schedule_t *ps, int);
 
 /*Create a user's thread
 *    @param[in]:

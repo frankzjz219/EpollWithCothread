@@ -69,21 +69,19 @@ void uthread_yield(schedule_t &schedule)
     }
 }
 
-void uthread_body(schedule_t *ps)
+// 协程包装函数
+void uthread_body(schedule_t *ps, int id)
 {
-    int id = ps->running_thread;
+    std::shared_ptr<uthread_t> t = ps->threads[id]; // 找到当前在执行的函数的信息
 
-    if(id != -1){
-        std::shared_ptr<uthread_t> t = ps->threads[id]; // 找到当前在执行的函数的信息
+    t->func(t->arg); // 这里执行了任务函数
 
-        t->func(t->arg); // 这里执行了任务函数
-
-        t->state = FREE; // 执行结束之后设置为FREE提示结束
-        
-        ps->running_thread = -1; // 设置为当前没有在执行函数
-    }
+    t->state = FREE; // 执行结束之后设置为FREE提示结束
+    
+    ps->running_thread = -1; // 设置为当前没有在执行函数
 }
 
+//添加一个协程
 int uthread_create(schedule_t &schedule,Fun func, unsigned long long priority, void *arg)
 {
     // printf("trying to create coThread...\n");
@@ -117,7 +115,7 @@ int uthread_create(schedule_t &schedule,Fun func, unsigned long long priority, v
     t->usedTime = 0;
     t->prevTime = getMicroseconds();
     
-    makecontext(&(t->ctx),(void (*)(void))(uthread_body),1,&schedule);
+    makecontext(&(t->ctx),(void (*)(void))(uthread_body),2,&schedule, id);
     schedule.threadPool.push(id);
     schedule.mutex->unlock();
     printf("创建coThread完毕！\n");
@@ -128,6 +126,7 @@ int uthread_create(schedule_t &schedule,Fun func, unsigned long long priority, v
     return id;
 }
 
+// 判断当前有无在运行的协程
 int schedule_finished(schedule_t &schedule)
 {
     schedule.mutex->lock();
@@ -146,6 +145,7 @@ int schedule_finished(schedule_t &schedule)
     return 1;
 }
 
+// 每个线程的调度器
 void* coThreadScheduler(void* schedule)
 {
     int cnt = 0;
@@ -168,7 +168,7 @@ void* coThreadScheduler(void* schedule)
         }
         else
         {
-            printf("no active job!\n");
+            printf("coThread %d no active job!\n", s.id);
             usleep((unsigned long)1e6);
         }
         
