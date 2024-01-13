@@ -49,7 +49,7 @@ int main()
     uthread_create(scheduler_attrs[0], func2, 4, &(scheduler_attrs[0]));
     uthread_create(scheduler_attrs[1], func2, 4, &(scheduler_attrs[1]));
     uthread_create(scheduler_attrs[2], func2, 1, &(scheduler_attrs[2]));
-    uthread_create(scheduler_attrs[3], func2, 1, &(scheduler_attrs[2]));
+    // uthread_create(scheduler_attrs[3], func2, 1, &(scheduler_attrs[2]));
 
     while(1){usleep((unsigned long)1e6);}
     return 0;

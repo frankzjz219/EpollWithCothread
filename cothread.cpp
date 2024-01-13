@@ -151,13 +151,13 @@ void* coThreadScheduler(void* schedule)
     int cnt = 0;
     schedule_t& s = *(schedule_t*)schedule;
     while(!s.stopFlag){
-        printf("Scheduler %d:\n", s.id);
+        
         if(!schedule_finished(s))
         {
             fairResume(s);
             if(cnt%30 == 0)
             {
-                
+                printf("Scheduler %d:\n", s.id);
                 for(auto i = s.threads.begin(); i!=s.threads.end(); ++i)
                 {
                     printf("thread %d has been running for %llu\n", i->second->id, i->second->usedTime);
