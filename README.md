@@ -77,3 +77,5 @@ thread 0 has been running for 1547652
 - 给`shceduler`增加了id属性编号
 ## 1月14日更新
 - 改变了部分工具函数对用户的可见性，修改了控制台输出的文字格式便于阅读
+- ![Alt text](./imgs/image.png)
+- ![Alt text](./imgs/2.png)
