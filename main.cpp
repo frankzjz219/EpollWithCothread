@@ -18,19 +18,20 @@ int getRandomNumber(int min, int max) {
     return dis(gen);
 }
 
-void func2(void * arg)
+void func2(std::shared_ptr<uthread_t> t, void * arg)
 {
     while(1)
     {
         usleep(getRandomNumber(10, 200)*1000);
         // printf("0\n");
-        uthread_yield(*(schedule_t *)arg);
+        uthread_yield(t);
     }
 }
 
-void func(void* arg)
+void func(std::shared_ptr<uthread_t> t, void* arg)
 {
     usleep(getRandomNumber(10, 200)*1000);
+    uthread_yield(t);
 }
 
 
@@ -42,19 +43,19 @@ int main()
     signal(SIGINT, sigINTHandler);
     for(int i = 0; i<COTHREADNUM; ++i)
     {
-        createCoThread(scheduler_attrs[i]);
+        createCoThread();
     }
 
-    uthread_create(scheduler_attrs[0], func2, 1, &(scheduler_attrs[0]));
-    uthread_create(scheduler_attrs[1], func2, 1, &(scheduler_attrs[1]));
-    uthread_create(scheduler_attrs[0], func2, 2, &(scheduler_attrs[0]));
-    uthread_create(scheduler_attrs[1], func2, 2, &(scheduler_attrs[1]));
-    uthread_create(scheduler_attrs[0], func2, 3, &(scheduler_attrs[0]));
-    uthread_create(scheduler_attrs[1], func2, 3, &(scheduler_attrs[1]));
-    uthread_create(scheduler_attrs[0], func2, 4, &(scheduler_attrs[0]));
-    uthread_create(scheduler_attrs[1], func2, 4, &(scheduler_attrs[1]));
-    uthread_create(scheduler_attrs[2], func2, 1, &(scheduler_attrs[2]));
-    uthread_create(scheduler_attrs[3], func, 1, &(scheduler_attrs[2]));
+    // uthread_create(0, func2, 1, NULL);
+    // uthread_create(1, func2, 1, NULL);
+    // uthread_create(0, func2, 2, NULL);
+    // uthread_create(1, func2, 2, NULL);
+    // uthread_create(0, func2, 3, NULL);
+    // uthread_create(1, func2, 3, NULL);
+    // uthread_create(0, func2, 4, NULL);
+    // uthread_create(1, func2, 4, NULL);
+    uthread_create(2, func2, 1, NULL);
+    // uthread_create(3, func, 1, NULL);
 
     while(1){usleep((unsigned long)1e6);}
     return 0;
