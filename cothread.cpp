@@ -50,7 +50,7 @@ void fairResume(schedule_t &schedule)
     schedule.threadPool.pop();
     schedule.mutex->unlock();
     // printf("poping %d\n", id);
-    printf("resuming %d\n", id);
+    // printf("resuming %d\n", id);
     uthread_resume(schedule, id);
 }
 
@@ -59,7 +59,7 @@ void uthread_yield(std::shared_ptr<uthread_t> t)
 {
     
     schedule_t &schedule = scheduler_attrs[t->schid];
-    printf("yielding scheduler %d\n", t->schid);
+    // printf("yielding scheduler %d\n", t->schid);
     schedule.mutex->lock();
 
     // printf("running: %d\n", schedule.id);
