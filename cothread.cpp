@@ -9,14 +9,14 @@ schedule_t::schedule_t() : running_thread(-1), max_index(0), mutex(std::make_sha
     threadPool = std::priority_queue<int, std::vector<int>, std::function<bool(int, int)>>(cmp);
 }
 
-unsigned long long getMicroseconds()
+static unsigned long long getMicroseconds()
 {
     struct timeval currentTime;
     gettimeofday(&currentTime, NULL);
     return currentTime.tv_sec * (int)1e6 + currentTime.tv_usec;
 }
 
-void uthread_resume(schedule_t &schedule, int id)
+static void uthread_resume(schedule_t &schedule, int id)
 {
     schedule.mutex->lock();
     // printf("Resuming\n");
@@ -76,7 +76,7 @@ void uthread_yield(std::shared_ptr<uthread_t> t)
 }
 
 // 协程包装函数
-void uthread_body(int i, int id)
+static void uthread_body(int i, int id)
 {
     schedule_t &s = scheduler_attrs[i];
     std::shared_ptr<uthread_t> t = s.threads[id]; // 找到当前在执行的函数的信息
@@ -129,7 +129,7 @@ int uthread_create(int i, Fun func, unsigned long long priority, void *arg)
     makecontext(&(t->ctx), (void (*)(void))(uthread_body), 2, i, id);
     schedule.threadPool.push(id);
     schedule.mutex->unlock();
-    printf("创建coThread完毕！\n");
+    printf("\033[32m创建coThread完毕！\033[0m\n");
     // 执行携程任务函数
     // swapcontext(&(schedule.main), &(t->ctx));
     // setcontext(&(t->ctx));
@@ -138,7 +138,7 @@ int uthread_create(int i, Fun func, unsigned long long priority, void *arg)
 }
 
 // 判断当前有无在运行的协程
-int schedule_finished(schedule_t &schedule)
+static int schedule_finished(schedule_t &schedule)
 {
     schedule.mutex->lock();
     if (schedule.running_thread != -1)
@@ -162,7 +162,7 @@ int schedule_finished(schedule_t &schedule)
 }
 
 // 每个线程的调度器
-void *coThreadScheduler(void *schedule)
+static void *coThreadScheduler(void *schedule)
 {
     int cnt = 0;
     schedule_t &s = *(schedule_t *)schedule;
@@ -172,9 +172,9 @@ void *coThreadScheduler(void *schedule)
         if (!schedule_finished(s))
         {
             fairResume(s);
-            if (cnt % 30 == 0)
+            if (cnt % 50 == 0)
             {
-                printf("Scheduler %d:\n", s.id);
+                printf("\033[1;4;34mScheduler %d:\033[0m\n", s.id);
                 for (auto i = s.threads.begin(); i != s.threads.end(); ++i)
                 {
                     printf("thread %d has been running for %llu\n", i->second->id, i->second->usedTime);
@@ -185,11 +185,14 @@ void *coThreadScheduler(void *schedule)
         }
         else
         {
-            printf("coThread %d no active job!\n", s.id);
-            usleep((unsigned long)1e6);
+            ++cnt;
+            usleep((unsigned long)5e3);
+            
+            if (cnt % (int)1e3 == 0) 
+                printf("\033[1;4;34mcoThread %d no active job!\033[0m\n", s.id);
         }
     }
-    puts("scheduler over");
+    printf("\033[34mscheduler %d quiting...\033[0m\n", s.id);
     return NULL;
 }
 
@@ -201,7 +204,7 @@ void createCoThread()
     printf("Creating coThread scheduler %d ...\n", schedule.id);
     if (pthread_create(&(schedule.threadHandle), NULL, coThreadScheduler, &schedule))
     {
-        perror("Cothread creation failed");
+        perror("\033[1;31m***Cothread creation failed***\033[0m\n");
         exit(EXIT_FAILURE);
     }
 }
@@ -211,16 +214,16 @@ void sigINTHandler(int i)
     for (int i = 0; i < scheduler_attrs.size(); ++i)
     {
         scheduler_attrs[i].mutex->lock();
-        printf("关闭携程 %d 中...\n", scheduler_attrs[i].id);
+        printf("\033[1;31m关闭携程 %d 中...\033[0m\n", scheduler_attrs[i].id);
         scheduler_attrs[i].stopFlag = 1; // 使得携程停止
         scheduler_attrs[i].mutex->unlock();
         if (pthread_join(scheduler_attrs[i].threadHandle, NULL))
         {
-            printf("***回收携程线程 %d 失败!***\n", scheduler_attrs[i].id);
+            fprintf(stderr, "\033[1;31m***回收携程线程 %d 失败!***\033[0m\n", scheduler_attrs[i].id);
         }
         else
         {
-            printf("回收携程线程 %d 完成！\n", scheduler_attrs[i].id);
+            printf("\033[1;32m回收携程线程 %d 完成！\033[0m\n", scheduler_attrs[i].id);
         }
     }
     exit(0);

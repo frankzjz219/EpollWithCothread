@@ -3,6 +3,7 @@
 #include <random>
 
 // g++ cothread.cpp main.cpp -o test -lpthread -g
+// ./test > ./out.txt
 #include "cothread.h"
 
 #define COTHREADNUM 4
@@ -46,16 +47,16 @@ int main()
         createCoThread();
     }
 
-    // uthread_create(0, func2, 1, NULL);
-    // uthread_create(1, func2, 1, NULL);
-    // uthread_create(0, func2, 2, NULL);
-    // uthread_create(1, func2, 2, NULL);
-    // uthread_create(0, func2, 3, NULL);
-    // uthread_create(1, func2, 3, NULL);
-    // uthread_create(0, func2, 4, NULL);
-    // uthread_create(1, func2, 4, NULL);
+    uthread_create(0, func2, 1, NULL);
+    uthread_create(1, func2, 1, NULL);
+    uthread_create(0, func2, 2, NULL);
+    uthread_create(1, func2, 2, NULL);
+    uthread_create(0, func2, 3, NULL);
+    uthread_create(1, func2, 3, NULL);
+    uthread_create(0, func2, 4, NULL);
+    uthread_create(1, func2, 4, NULL);
     uthread_create(2, func2, 1, NULL);
-    // uthread_create(3, func, 1, NULL);
+    uthread_create(3, func, 1, NULL);
 
     while(1){usleep((unsigned long)1e6);}
     return 0;

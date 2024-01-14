@@ -18,7 +18,7 @@
 #define DEFAULT_STACK_SZIE (1024*128)
 #define MAX_UTHREAD_SIZE   1024
 
-unsigned long long getMicroseconds();
+// unsigned long long getMicroseconds();
 
 enum ThreadState{FREE,RUNNABLE,RUNNING,SUSPEND};
 
@@ -107,12 +107,12 @@ void uthread_yield(std::shared_ptr<uthread_t> t);
     @param schedule 传入的协程线程结构体
     @param id 需要恢复的对应协程号
 */
-void uthread_resume(schedule_t &schedule,int id);
+// void uthread_resume(schedule_t &schedule,int id);
 
 /*test whether all the threads in schedule run over
     @param schedule 需要判断的协程调度器线程结构体
 */
-int schedule_finished(schedule_t &schedule);
+// int schedule_finished(schedule_t &schedule);
 
 // 这里打开的线程数组全局变量
 extern std::vector<schedule_t> scheduler_attrs;
