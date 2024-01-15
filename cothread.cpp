@@ -129,7 +129,7 @@ int uthread_create(int i, Fun func, unsigned long long priority, void *arg)
     makecontext(&(t->ctx), (void (*)(void))(uthread_body), 2, i, id);
     schedule.threadPool.push(id);
     schedule.mutex->unlock();
-    printf("\033[32m创建coThread完毕！\033[0m\n");
+    printf("\033[32m协程 %d 创建coThread完毕！\033[0m\n", i);
     // 执行携程任务函数
     // swapcontext(&(schedule.main), &(t->ctx));
     // setcontext(&(t->ctx));
@@ -201,12 +201,12 @@ void createCoThread()
     int id = ++schedule_t::cntScheduler;
     schedule_t &schedule = scheduler_attrs[id - 1];
     schedule.id = id;
-    printf("Creating coThread scheduler %d ...\n", schedule.id);
     if (pthread_create(&(schedule.threadHandle), NULL, coThreadScheduler, &schedule))
     {
-        perror("\033[1;31m***Cothread creation failed***\033[0m\n");
+        fprintf(stderr, "\033[1;31m***Cothread %d creation failed***\033[0m\n", id);
         exit(EXIT_FAILURE);
     }
+    printf("\033[1;32m协程 %d 线程创建完毕\033[0m\n", id);
 }
 
 void sigINTHandler(int i)

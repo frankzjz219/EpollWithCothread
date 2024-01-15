@@ -56,7 +56,14 @@ int main()
     uthread_create(0, func2, 4, NULL);
     uthread_create(1, func2, 4, NULL);
     uthread_create(2, func2, 1, NULL);
-    uthread_create(3, func, 1, NULL);
+    // uthread_create(3, func, 1, NULL);
+    usleep(5000*1000);
+    uthread_create(3, func2, 1, NULL);
+    while(1)
+    {
+        usleep(getRandomNumber(1, 5)*1000000);
+        uthread_create(getRandomNumber(0, COTHREADNUM-1), func, 1, NULL);
+    }
 
     while(1){usleep((unsigned long)1e6);}
     return 0;

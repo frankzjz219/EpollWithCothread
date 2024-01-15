@@ -88,7 +88,7 @@ void createCoThread();
 void fairResume(schedule_t &schedule);
 
 /*help the thread running in the schedule*/
-static void uthread_body(int, int);
+// static void uthread_body(int, int);
 
 /*创建一个协程
     @param id 希望创建协程任务的协程线程ID
