@@ -8,7 +8,6 @@
 
 #define COTHREADNUM 4
 
-int schedule_t::cntScheduler = 0;
 std::vector<schedule_t> scheduler_attrs(COTHREADNUM);
 
 int getRandomNumber(int min, int max) {
@@ -23,8 +22,10 @@ void func2(std::shared_ptr<uthread_t> t, void * arg)
 {
     while(1)
     {
+        // usleep(getRandomNumber(10, 200)*1000);
+        // // printf("0\n");
+        // uthread_yield_to_suspend(t);
         usleep(getRandomNumber(10, 200)*1000);
-        // printf("0\n");
         uthread_yield(t);
     }
 }
@@ -32,7 +33,7 @@ void func2(std::shared_ptr<uthread_t> t, void * arg)
 void func(std::shared_ptr<uthread_t> t, void* arg)
 {
     usleep(getRandomNumber(10, 200)*1000);
-    uthread_yield(t);
+    uthread_yield_to_suspend(t);
 }
 
 
@@ -44,7 +45,7 @@ int main()
     signal(SIGINT, sigINTHandler);
     for(int i = 0; i<COTHREADNUM; ++i)
     {
-        createCoThread();
+        createCoThread(i);
     }
 
     uthread_create(0, func2, 1, NULL);
@@ -63,6 +64,14 @@ int main()
     {
         usleep(getRandomNumber(1, 5)*1000000);
         uthread_create(getRandomNumber(0, COTHREADNUM-1), func, 1, NULL);
+        for(auto& s : scheduler_attrs)
+        {
+            for(auto& j : s.threads)
+            {
+                if(j.second->state == SUSPEND)
+                    j.second->state = RUNNABLE;
+            }
+        }
     }
 
     while(1){usleep((unsigned long)1e6);}
