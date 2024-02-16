@@ -150,7 +150,7 @@ void *EpollServer:: coThreadScheduler(void *schedule)
 
 void EpollServer::fairResume(schedule_t& schedule)
 {
-    // printf("fair resuming sched: %d\n", schedule.id);
+    printf("fair resuming sched: %d\n", schedule.id);
     schedule.mutex->lock();
     int id = schedule.threadPool.top();
 
@@ -185,7 +185,7 @@ void EpollServer::fairResume(schedule_t& schedule)
 void EpollServer:: uthread_resume(schedule_t &schedule, int id)
 {
     schedule.mutex->lock();
-    printf("Resuming sock %d\n", schedule.threads[id]->sock_fd);
+    printf("Resuming cothread %d, sock %d\n", id, schedule.threads[id]->sock_fd);
     // printf("cnt: %ld\n", schedule.threads[id].use_count());
     if (id < 0 || id >= schedule.max_index)
     {
@@ -219,9 +219,9 @@ int EpollServer:: schedule_finished(schedule_t &schedule)
     }
     else
     {
-        for (int i = 0; i < schedule.max_index; ++i)
+        for(auto i : schedule.threads)
         {
-            if (schedule.threads[i]->state == RUNNABLE)
+            if(i.second->state == RUNNABLE)
             {
                 schedule.mutex->unlock();
                 return 0;
@@ -229,6 +229,7 @@ int EpollServer:: schedule_finished(schedule_t &schedule)
         }
     }
     schedule.mutex->unlock();
+    printf("无可用协程\n");
     return 1;
 }
 
@@ -286,11 +287,13 @@ void* EpollServer::handleEpoll(void* e)
             }
             else
             {
-                if(ep->fdToUthread.find(events[i].data.fd)==ep->fdToUthread.end())continue;
+                // if(ep->fdToUthread.find(events[i].data.fd)==ep->fdToUthread.end())continue;
                 // printf("\033[1;32m收到socket%d的信息！\033[0m\n", events[i].data.fd);
                 // 允许对应的协程上处理机执行
                 // if(ep->fdToUthread[events[i].data.fd]!=NULL)
-                ep->fdToUthread[events[i].data.fd]->state = RUNNABLE;
+                auto it= ep->fdToUthread.find(events[i].data.fd);
+                if(it != ep->fdToUthread.end() && it->second!=NULL)
+                    it->second->state = RUNNABLE;
             }
         }
     }
@@ -301,21 +304,10 @@ void EpollServer::createUthread(EpollServer* ep, schedule_t &schedule, unsigned 
     // printf("\033[1;32m 检测到客户端连接，在创建协程！\033[0m\n");
     // 防止重复创建
     schedule.createFlag = false;
-    int id = 0;
+    int id = schedule.max_index++;
     schedule.mutex->lock();
-    // 寻找一个当前可用的协程ID
-    for (id = 0; id < schedule.max_index; ++id)
-    {
-        if (schedule.threads[id]->state == FREE)
-        {
-            break;
-        }
-    }
-
-    if (id == schedule.max_index)
-    {
-        schedule.max_index++;
-    }
+    
+    printf("Creating cothread id: %d\n, sock id: %d", id, client_sock);
     schedule.threads[id] = std::make_shared<uthread_t>();
     std::shared_ptr<uthread_t> t = schedule.threads[id];
     t->id = id; // 建立thread指针向携程id的索引
@@ -371,15 +363,17 @@ void EpollServer::socketEcho(uthread_t* u)
             close(u->sock_fd);
             // event.events = EPOLLIN;
             event.data.fd = u->sock_fd;
+            // 删除epoll监听的事件
             epoll_ctl(u->epoll_fd, EPOLL_CTL_DEL, u->sock_fd, &event);
-            // 删除对应的fd映射
-            // ((EpollServer*)(u->epServer))->fdToUthread[u->sock_fd] = NULL;
+            // 删除sockfd到uthread的映射
             auto it = ((EpollServer*)(u->epServer))->fdToUthread.find(u->sock_fd);
             ((EpollServer*)(u->epServer))->fdToUthread.erase(it);
-
-            // printf("\033[32m客户端 %d 的fd到socket的映射已经删除！\033[0m\n", u->sock_fd);
             u->state = FREE;
             u->schedPtr->running_thread = -1;
+            // 删除schedule_t 中uthread id 到uthread的映射
+            auto it_ = u->schedPtr->threads.find(u->id);
+            u->schedPtr->threads.erase(it_);
+            // printf("\033[32m客户端 %d 的fd到socket的映射已经删除！\033[0m\n", u->sock_fd);
             return;
         }
         memset(bufferPrint, 0, sizeof(bufferPrint));
@@ -388,7 +382,7 @@ void EpollServer::socketEcho(uthread_t* u)
         printf("\033[32msocket %d 收到消息:%s \033[0m\n", u->sock_fd, bufferPrint);
         // printf("1\n");
         write(u->sock_fd, bufferPrint, n_read);
-        usleep(2000000);
+        usleep(1000000);
         // printf("2\n");
         uthread_suspend(u);
         // printf("3\n");
@@ -410,7 +404,7 @@ void EpollServer::createThread(int id, schedule_t& schedule)
 
 void EpollServer::uthread_suspend(uthread_t* t)
 {
-    puts("Suspending...\n");
+    printf("Suspending: %d, sock %d\n", t->id, t->sock_fd);
     schedule_t &schedule = *(t->schedPtr);
     // printf("yielding scheduler %d\n", t->schid);
     schedule.mutex->lock();

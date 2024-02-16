@@ -17,7 +17,7 @@
 #include <queue>
 
 
-#define DEFAULT_STACK_SZIE (1024)
+#define DEFAULT_STACK_SZIE (1024*128)
 #define MAX_UTHREAD_SIZE   1024
 
 // unsigned long long getMicroseconds();
@@ -52,7 +52,7 @@ typedef struct uthread_t
     uthread_t& operator=(const uthread_t&) = delete;
     ~uthread_t()
     {
-        // puts("***正在析构uthread...\n");
+        printf("***正在析构uthread%d, sock: %d\n", id, sock_fd);
     }
 }uthread_t;
 
