@@ -359,7 +359,7 @@ void EpollServer::socketEcho(uthread_t* u)
         }
         if (n_read == 0)
         {
-            printf("\033[32m客户端 %d 连接已断开！\033[0m\n", u->sock_fd);
+            printf("\033[31m客户端 %d 连接已断开！\033[0m\n", u->sock_fd);
             close(u->sock_fd);
             // event.events = EPOLLIN;
             event.data.fd = u->sock_fd;
