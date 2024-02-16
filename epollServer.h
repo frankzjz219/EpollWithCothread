@@ -41,17 +41,32 @@ class EpollServer
         @param ep 传入要处理的epollServer对象的指针
     */
     static void* handleEpoll(void* ep);
-    
+
+    /*判断一个线程此时是否没有在执行的内容
+        @param schedule 传入协程结构体
+    */
+    static int schedule_finished(schedule_t &schedule);
+
+    /*选出一个上处理机的线程
+        @param schedule 传入协程结构体
+    */
+    static void fairResume(schedule_t &schedule);
+
+    /*切换到工作协程
+        @param schedule 传入协程结构体
+        @param id 要恢复的协程id
+    */
+    static void uthread_resume(schedule_t &schedule, int id);
     /*数据处理函数
         @param u 是指向uthread结构体的指针
     */
-    static void socketEcho(std::shared_ptr<uthread_t> u);
+    static void socketEcho(uthread_t* u);
 
     /*协程让出处理机的函数
-        @param t 协程结构体
+        @param t 协程结构体指针
     
     */
-    static void uthread_suspend(std::shared_ptr<uthread_t>& t);
+    static void uthread_suspend(uthread_t* t);
 
     /*创建一个新的协程
         @param schedule 协程结构体
@@ -59,11 +74,12 @@ class EpollServer
         @param priority 重要性
         @param client_sock 客户端socket端口
     */
-    void createUthread(schedule_t &schedule, void(*func)(std::shared_ptr<uthread_t>), unsigned long long priority, int client_sock);
+    static void createUthread(EpollServer* ep, schedule_t &schedule, unsigned long long priority, int client_sock);
     /* 处理Ctrl C
         @param sig 信号
     */
     static void handleSigINT(EpollServer* t, int sig);
+    static void *coThreadScheduler(void *schedule);
 public:
     /*初始化EpollServer
     @param threads 服务器的线程数量

@@ -51,6 +51,7 @@ int main()
     {
         // scanf("%s", (char *)&sendBuf);
         write(sockFd, sendBuf, strlen(sendBuf)+1);
+        puts("发送完成");
         int n = 0;
         n = read(sockFd, readBuf, 1);
         puts("Server Repeat: ");
