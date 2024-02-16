@@ -10,7 +10,7 @@ void sigIntHandler(int sig)
 int main()
 {
     signal(SIGINT, sigIntHandler);
-    EpollServer ep(1, 18080);
+    EpollServer ep(2, 18080);
     while(flag){usleep(1e3);}
     return 0;
 }
