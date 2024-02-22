@@ -9,6 +9,7 @@
 - 创建之后将协程状态设置为`SUSPEND`
 - 等待epoll接收到信号之后，通过一个哈希映射`unordered_map`将对应的协程状态设置为`RUNNABLE`提示该协程的调度器可以上处理机运行
 - 然后对应的**协程调度器**将协程调度上处理机，协程处理完之后会继续将自己设置为`SUSPEND`状态并且下处理机，等待`epoll_wait`收到信号之后如上所述将自己的状态设置为`RUNNABLE`, 然后本线程的协程调度器激活自己
+- ![Alt text](/imgs/epollServer.drawio.png)
 
 ## 使用
 ```cpp
