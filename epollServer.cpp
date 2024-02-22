@@ -19,6 +19,10 @@ EpollServer::~EpollServer()
         }
     }
     pthread_cancel(epollThread);
+    // 关闭epoll fd
+    close(epoll_fd);
+    // 关闭服务器socket fd
+    close(server_fd);
     printf("\033[1;32m回收epoll handler完成！\033[0m\n");
 }
 
