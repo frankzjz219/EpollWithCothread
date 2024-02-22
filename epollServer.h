@@ -68,7 +68,7 @@ class EpollServer
     */
     static void uthread_suspend(uthread_t* t);
 
-    /*创建一个新的协程
+    /*创建一个新的协程，执行过程已经获取锁
         @param schedule 协程结构体
         @param func 协程工作函数
         @param priority 重要性

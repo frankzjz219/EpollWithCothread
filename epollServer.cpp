@@ -95,6 +95,7 @@ void EpollServer:: handleSigINT(EpollServer* t, int sig)
 {
     for (int i = 0; i < t->scheduler_attrs.size(); ++i)
     {
+        // 获取锁
         t->scheduler_attrs[i].mutex->lock();
         printf("\033[1;31m关闭携程 %d 中...\033[0m\n", t->scheduler_attrs[i].id);
         t->scheduler_attrs[i].stopFlag = 1; // 使得携程停止
@@ -391,6 +392,7 @@ void EpollServer::socketEcho(uthread_t* u)
 
 void EpollServer::createThread(int id, schedule_t& schedule)
 {
+    schedule.mutex->lock();
     schedule.id = id;
     schedule.epServer = this;
     if (pthread_create(&(schedule.threadHandle), NULL, coThreadScheduler, &schedule))
@@ -400,6 +402,7 @@ void EpollServer::createThread(int id, schedule_t& schedule)
         exit(EXIT_FAILURE);
     }
     printf("\033[1;32m协程 %d 线程创建完毕\033[0m\n", id);
+    schedule.mutex->unlock();
 }
 
 void EpollServer::uthread_suspend(uthread_t* t)
