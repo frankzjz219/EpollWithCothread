@@ -11,6 +11,13 @@
 #include <iostream>
 #include <string.h>
 
+typedef struct TimerInfo
+{
+    unsigned long long expireTime;
+    uthread_t* cb;
+    TimerInfo(unsigned long long e, uthread_t* u):expireTime(e), cb(u){};
+} TimerInfo;
+
 class EpollServer
 {
     // 线程的集合
@@ -31,6 +38,10 @@ class EpollServer
     int threadToPut;
     // epoll监听线程的线程
     pthread_t epollThread;
+    // 存放定时器的优先级队列
+    std::priority_queue<std::shared_ptr<TimerInfo>> timers;
+    // 定时器控制线程
+    pthread_t timerThread;
 
     /*创建线程
     @param s 传入线程结构体的引用
@@ -79,7 +90,22 @@ class EpollServer
         @param sig 信号
     */
     static void handleSigINT(EpollServer* t, int sig);
+    /* 协程调度器工作函数
+        @param schedule 协程信息结构体
+    */
     static void *coThreadScheduler(void *schedule);
+
+    /* 定时器控制函数
+        @param ep 类自身指针
+    */
+    static void *timerManager(void *ep);
+
+    /*
+        @param u 当前协程指针
+        @param timeToDelay 需要延迟的时间 微秒
+    */
+    static void addTimer(uthread_t* u, unsigned long long timeToDelay);
+
 public:
     /*初始化EpollServer
     @param threads 服务器的线程数量

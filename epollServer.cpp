@@ -19,6 +19,7 @@ EpollServer::~EpollServer()
         }
     }
     pthread_cancel(epollThread);
+    pthread_cancel(timerThread);
     // 关闭epoll fd
     close(epoll_fd);
     // 关闭服务器socket fd
@@ -35,7 +36,8 @@ EpollServer::EpollServer(int threads, int port):threadCnt(threads), clientEnt(0)
     {
         createThread(i, scheduler_attrs[i]);
     }
-
+    pthread_create(&(timerThread), NULL, timerManager, this);
+    printf("\033[1;32m定时器线程创建完成！\033[0m\n");
     // 网络部分
     // 创建socket
     server_fd = socket(AF_INET, SOCK_STREAM|SOCK_NONBLOCK, 0);
@@ -238,6 +240,26 @@ int EpollServer:: schedule_finished(schedule_t &schedule)
     return 1;
 }
 
+void* EpollServer::timerManager(void* e)
+{
+    EpollServer* ep = (EpollServer*)e;
+    std::priority_queue<std::shared_ptr<TimerInfo>>& ti = ep->timers;
+    while(ti.size() && ti.top()->expireTime>=getMicroseconds())
+    {
+        ti.top()->cb->state = RUNNABLE;
+        ti.pop();
+    }
+    return NULL;
+}
+
+void EpollServer:: addTimer(uthread_t* u, unsigned long long timeToDelay)
+{
+    std::shared_ptr<TimerInfo> newTi = std::make_shared<TimerInfo>(getMicroseconds()+timeToDelay, u);
+    EpollServer* ep = (EpollServer*)(u->epServer);
+    ep->timers.push(newTi);
+}
+
+
 void* EpollServer::handleEpoll(void* e)
 {
     EpollServer* ep = (EpollServer*)e;
@@ -387,7 +409,8 @@ void EpollServer::socketEcho(uthread_t* u)
         printf("\033[32msocket %d 收到消息:%s \033[0m\n", u->sock_fd, bufferPrint);
         // printf("1\n");
         write(u->sock_fd, bufferPrint, n_read);
-        usleep(1000000);
+        // usleep(1000000);
+        addTimer(u, 1000000);
         // printf("2\n");
         uthread_suspend(u);
         // printf("3\n");
