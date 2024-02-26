@@ -15,7 +15,14 @@ typedef struct TimerInfo
 {
     unsigned long long expireTime;
     uthread_t* cb;
-    TimerInfo(unsigned long long e, uthread_t* u):expireTime(e), cb(u){};
+    TimerInfo(unsigned long long e, uthread_t* u):expireTime(e), cb(u)
+    {
+        // printf("Creating timer %d\n", cb->sock_fd);
+    };
+    ~TimerInfo()
+    {
+        // printf("Destroying timer %d\n", cb->sock_fd);
+    }
 } TimerInfo;
 
 class EpollServer
@@ -39,9 +46,11 @@ class EpollServer
     // epoll监听线程的线程
     pthread_t epollThread;
     // 存放定时器的优先级队列
-    std::priority_queue<std::shared_ptr<TimerInfo>> timers;
+    std::priority_queue<std::shared_ptr<TimerInfo>, std::vector<std::shared_ptr<TimerInfo>>, std::function<bool(std::shared_ptr<TimerInfo>&, std::shared_ptr<TimerInfo>&)>> timers;
     // 定时器控制线程
     pthread_t timerThread;
+    // 保护定时器用的锁
+    std::shared_ptr<mutexWrapper> timerMutex;
 
     /*创建线程
     @param s 传入线程结构体的引用

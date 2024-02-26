@@ -28,7 +28,7 @@ EpollServer::~EpollServer()
 }
 
 EpollServer::EpollServer(int threads, int port):threadCnt(threads), clientEnt(0), server_port(port),
-    threadToPut(0), scheduler_attrs(std::vector<schedule_t>(threads))
+    threadToPut(0), scheduler_attrs(std::vector<schedule_t>(threads)), timerMutex(std::make_shared<mutexWrapper>())
 {
     struct sockaddr_in server_addr;
     // 创建线程
@@ -36,6 +36,11 @@ EpollServer::EpollServer(int threads, int port):threadCnt(threads), clientEnt(0)
     {
         createThread(i, scheduler_attrs[i]);
     }
+    std::function<bool(std::shared_ptr<TimerInfo>&, std::shared_ptr<TimerInfo>&)> f = [](std::shared_ptr<TimerInfo>& a, std::shared_ptr<TimerInfo>& b)->bool
+    {
+        return a->expireTime > b->expireTime;
+    };
+    timers = std::priority_queue<std::shared_ptr<TimerInfo>, std::vector<std::shared_ptr<TimerInfo>>, std::function<bool(std::shared_ptr<TimerInfo>&, std::shared_ptr<TimerInfo>&)>>(f);
     pthread_create(&(timerThread), NULL, timerManager, this);
     printf("\033[1;32m定时器线程创建完成！\033[0m\n");
     // 网络部分
@@ -243,20 +248,34 @@ int EpollServer:: schedule_finished(schedule_t &schedule)
 void* EpollServer::timerManager(void* e)
 {
     EpollServer* ep = (EpollServer*)e;
-    std::priority_queue<std::shared_ptr<TimerInfo>>& ti = ep->timers;
-    while(ti.size() && ti.top()->expireTime>=getMicroseconds())
+    while(1)
     {
-        ti.top()->cb->state = RUNNABLE;
-        ti.pop();
+        // printf("timer manager...\n");
+        // 使用锁保护定时器队列
+        ep->timerMutex->lock();
+        if(ep->timers.size() && ep->timers.top()->expireTime<=getMicroseconds())
+        {
+            // printf("正在唤醒socket %d\n", ep->timers.top()->cb->sock_fd);
+            ep->timers.top()->cb->schedPtr->mutex->lock();
+            ep->timers.top()->cb->state = RUNNABLE;
+            ep->timers.top()->cb->schedPtr->mutex->unlock();
+            ep->timers.pop();
+        }
+        ep->timerMutex->unlock();
+        usleep(1000);
     }
     return NULL;
 }
 
 void EpollServer:: addTimer(uthread_t* u, unsigned long long timeToDelay)
 {
+    
     std::shared_ptr<TimerInfo> newTi = std::make_shared<TimerInfo>(getMicroseconds()+timeToDelay, u);
     EpollServer* ep = (EpollServer*)(u->epServer);
+    // 使用锁保护定时器队列
+    ep->timerMutex->lock();
     ep->timers.push(newTi);
+    ep->timerMutex->unlock();
 }
 
 
