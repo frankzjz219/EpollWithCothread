@@ -17,11 +17,11 @@ typedef struct TimerInfo
     uthread_t* cb;
     TimerInfo(unsigned long long e, uthread_t* u):expireTime(e), cb(u)
     {
-        // printf("Creating timer %d\n", cb->sock_fd);
+        printf("Creating timer %d\n", cb->sock_fd);
     };
     ~TimerInfo()
     {
-        // printf("Destroying timer %d\n", cb->sock_fd);
+        printf("Destroying timer %d\n", cb->sock_fd);
     }
 } TimerInfo;
 

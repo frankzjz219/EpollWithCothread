@@ -261,6 +261,10 @@ void* EpollServer::timerManager(void* e)
             ep->timers.top()->cb->schedPtr->mutex->unlock();
             ep->timers.pop();
         }
+        else if(ep->timers.size() && ep->timers.top()->cb->state == FREE)
+        {
+            ep->timers.pop();
+        }
         ep->timerMutex->unlock();
         usleep(1000);
     }
@@ -414,8 +418,32 @@ void EpollServer::socketEcho(uthread_t* u)
             // 删除sockfd到uthread的映射
             auto it = ((EpollServer*)(u->epServer))->fdToUthread.find(u->sock_fd);
             ((EpollServer*)(u->epServer))->fdToUthread.erase(it);
+            // 修改自身的状态为free
             u->state = FREE;
             u->schedPtr->running_thread = -1;
+
+            // 遍历删除定时器中可能存在的跟自身相关的事件
+            ((EpollServer*)(u->epServer))->timerMutex->lock();
+            // 记录等下需要放回的事件
+            std::queue<std::shared_ptr<TimerInfo>> ptrToPutBack;
+            while(((EpollServer*)(u->epServer))->timers.size())
+            {
+                // printf("!");
+                if(((EpollServer*)(u->epServer))->timers.top()->cb->state!=FREE)
+                {
+                    ptrToPutBack.push(((EpollServer*)(u->epServer))->timers.top());
+                }
+                ((EpollServer*)(u->epServer))->timers.pop();
+            }
+            while(ptrToPutBack.size())
+            {
+                // printf(".");
+                ((EpollServer*)(u->epServer))->timers.push(ptrToPutBack.front());
+                ptrToPutBack.pop();
+            }
+            // 操作结束解锁
+            ((EpollServer*)(u->epServer))->timerMutex->unlock();
+
             // 删除schedule_t 中uthread id 到uthread的映射
             auto it_ = u->schedPtr->threads.find(u->id);
             u->schedPtr->threads.erase(it_);
